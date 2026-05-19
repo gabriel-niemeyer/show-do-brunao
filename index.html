@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Show do Brunão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#FFD24A;
+    --gold-2:#F5A623;
+    --gold-3:#8C5A00;
+    --bg-0:#0a0612;
+    --bg-1:#160a26;
+    --bg-2:#2a0f4a;
+    --ink:#0b0716;
+    --white:#fff;
+    --green:#2ecc71;
+    --red:#e74c3c;
+    --shadow: 0 20px 60px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;font-family:'Inter',system-ui,sans-serif;color:var(--white);}
+  body{
+    background:
+      radial-gradient(1200px 800px at 50% -10%, #4a1a8a 0%, transparent 60%),
+      radial-gradient(900px 600px at 90% 110%, #ff8a00 0%, transparent 55%),
+      radial-gradient(900px 600px at 10% 110%, #5a14a0 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg-0), var(--bg-1) 60%, #1c0a36);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.6), transparent 50%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.5), transparent 50%),
+      radial-gradient(1.5px 1.5px at 40% 80%, rgba(255,255,255,.4), transparent 50%),
+      radial-gradient(1px 1px at 85% 20%, rgba(255,255,255,.5), transparent 50%),
+      radial-gradient(1.5px 1.5px at 15% 70%, rgba(255,255,255,.35), transparent 50%);
+    opacity:.6;
+    animation:twinkle 6s infinite alternate ease-in-out;
+  }
+  @keyframes twinkle{from{opacity:.35}to{opacity:.75}}
+
+  .stage{
+    max-width: 980px; margin: 0 auto; padding: 28px 20px 80px;
+    position:relative; z-index:1;
+  }
+
+  /* Header */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; margin-bottom: 22px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:14px;
+  }
+  .logo{
+    width:72px;height:72px;border-radius:14px;
+    background: conic-gradient(from 210deg, #FFD24A, #F5A623, #b56e00, #FFD24A);
+    box-shadow: 0 8px 24px rgba(245,166,35,.45), inset 0 0 0 2px rgba(255,255,255,.25);
+    display:grid;place-items:center; color:#3a1d00; font-family:'Bebas Neue', sans-serif; font-size:28px;
+    letter-spacing:1px;
+  }
+  .title-wrap h1{
+    font-family:'Bebas Neue', sans-serif;
+    letter-spacing:2px;
+    font-size: clamp(28px, 4.4vw, 44px);
+    margin:0; line-height:1;
+    background: linear-gradient(180deg,#fff 0%, #FFE7A1 45%, #F5A623 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow: 0 2px 0 rgba(0,0,0,.15);
+  }
+  .title-wrap p{margin:4px 0 0;color:#e7d9ff;font-size:13px;opacity:.85}
+
+  .nav{
+    display:flex; gap:8px;
+    background: rgba(255,255,255,.06);
+    padding:6px; border-radius:999px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .nav button{
+    border:0; background:transparent; color:#e9defc; cursor:pointer;
+    padding:9px 16px; border-radius:999px; font-weight:600; font-size:13px;
+    letter-spacing:.3px; transition:.2s;
+  }
+  .nav button.active{
+    background: linear-gradient(180deg, #FFD24A, #F5A623);
+    color:#3a1d00; box-shadow: 0 6px 18px rgba(245,166,35,.35);
+  }
+
+  /* Cards */
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:22px; padding:26px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+  }
+
+  /* HUD */
+  .hud{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    margin-bottom:18px;
+  }
+  .pill{
+    display:inline-flex; align-items:center; gap:10px;
+    background: rgba(0,0,0,.35);
+    border:1px solid rgba(255,255,255,.08);
+    padding:10px 14px; border-radius:999px;
+    font-size:13px; color:#eadcff;
+  }
+  .miles{
+    display:flex; align-items:center; gap:10px;
+    background: linear-gradient(180deg, #FFD24A, #F5A623);
+    color:#3a1d00; font-weight:800; padding:10px 16px; border-radius:999px;
+    box-shadow: 0 8px 22px rgba(245,166,35,.35), inset 0 0 0 1px rgba(255,255,255,.4);
+  }
+  .miles svg{width:18px;height:18px}
+  .miles .num{font-variant-numeric: tabular-nums; font-size:15px}
+
+  /* Question */
+  .qbox{
+    margin-top:8px;
+    padding:24px;
+    border-radius:18px;
+    background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.2));
+    border:1px solid rgba(255,255,255,.08);
+    position:relative;
+    overflow:hidden;
+  }
+  .qbox::before{
+    content:""; position:absolute; inset:-1px;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,210,74,.18) 50%, transparent 70%);
+    transform: translateX(-100%); animation:sweep 6s infinite linear;
+    pointer-events:none;
+  }
+  @keyframes sweep{to{transform:translateX(100%)}}
+  .qnum{
+    font-family:'Bebas Neue',sans-serif; letter-spacing:1.5px;
+    color:#FFD24A; font-size:14px;
+  }
+  .qtext{
+    margin-top:6px;
+    font-size: clamp(18px, 2.4vw, 24px);
+    line-height:1.35; font-weight:600;
+  }
+
+  .answers{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px;
+  }
+  @media (max-width:640px){.answers{grid-template-columns:1fr}}
+  .ans{
+    text-align:left; cursor:pointer;
+    background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.12);
+    color:#fff; padding:16px 16px 16px 56px;
+    border-radius:14px; font-size:15px; font-weight:500;
+    position:relative; transition: transform .12s ease, background .2s, border-color .2s;
+  }
+  .ans:hover:not(:disabled){transform: translateY(-2px); border-color: rgba(255,210,74,.5)}
+  .ans .letter{
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    width:32px;height:32px;border-radius:10px;
+    background: linear-gradient(180deg, #FFD24A, #F5A623);
+    color:#3a1d00; display:grid; place-items:center; font-weight:800;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+  }
+  .ans:disabled{cursor:not-allowed; opacity:.85}
+  .ans.correct{
+    background: linear-gradient(180deg, rgba(46,204,113,.25), rgba(46,204,113,.1));
+    border-color: rgba(46,204,113,.7);
+    animation:pop .35s ease;
+  }
+  .ans.wrong{
+    background: linear-gradient(180deg, rgba(231,76,60,.25), rgba(231,76,60,.1));
+    border-color: rgba(231,76,60,.7);
+    animation:shake .35s ease;
+  }
+  @keyframes pop{0%{transform:scale(.98)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  .feedback{
+    margin-top:18px; min-height:54px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:14px; padding:14px; font-weight:700;
+    font-size:16px; letter-spacing:.3px;
+    border:1px dashed rgba(255,255,255,.12); color:#dcd1ff;
+    background: rgba(0,0,0,.25);
+  }
+  .feedback.ok{background:linear-gradient(180deg, rgba(46,204,113,.2), rgba(46,204,113,.05));border-color:rgba(46,204,113,.5);color:#dffbe9}
+  .feedback.no{background:linear-gradient(180deg, rgba(231,76,60,.2), rgba(231,76,60,.05));border-color:rgba(231,76,60,.5);color:#ffe1de}
+
+  .actions{
+    display:flex; justify-content:space-between; align-items:center; margin-top:16px; gap:10px; flex-wrap:wrap;
+  }
+  .btn{
+    border:0; cursor:pointer; padding:12px 18px; border-radius:12px;
+    font-weight:700; font-size:14px; letter-spacing:.3px; transition:.2s;
+  }
+  .btn-primary{
+    background: linear-gradient(180deg, #FFD24A, #F5A623); color:#3a1d00;
+    box-shadow: 0 8px 18px rgba(245,166,35,.35);
+  }
+  .btn-primary:hover{transform:translateY(-2px)}
+  .btn-ghost{
+    background: rgba(255,255,255,.08); color:#fff;
+    border:1px solid rgba(255,255,255,.14);
+  }
+  .btn-ghost:hover{background:rgba(255,255,255,.14)}
+  .btn-danger{background:rgba(231,76,60,.85); color:#fff}
+
+  /* Empty / End */
+  .center{text-align:center; padding: 40px 10px}
+  .center .big{
+    font-family:'Bebas Neue',sans-serif; font-size: clamp(36px,6vw,64px); letter-spacing:2px;
+    background: linear-gradient(180deg,#fff,#FFD24A);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .center .sub{color:#e1d2ff; margin-top:6px}
+
+  /* Admin */
+  .admin-grid{display:grid; grid-template-columns: 1fr; gap:18px}
+  @media (min-width:880px){.admin-grid{grid-template-columns: 1.1fr .9fr}}
+  label{font-size:12px; text-transform:uppercase; letter-spacing:1.3px; color:#cfbcf2; font-weight:700}
+  input[type=text], textarea{
+    width:100%; margin-top:6px; padding:12px 14px; border-radius:12px;
+    background: rgba(0,0,0,.35); color:#fff;
+    border:1px solid rgba(255,255,255,.12); font-size:14px; font-family:inherit;
+    outline:none; transition:.2s;
+  }
+  input:focus, textarea:focus{border-color:#FFD24A; box-shadow:0 0 0 3px rgba(255,210,74,.15)}
+  textarea{resize:vertical; min-height:72px}
+  .field{margin-bottom:14px}
+  .opt-row{display:flex; align-items:center; gap:10px; margin-top:8px}
+  .opt-row input[type=text]{margin-top:0}
+  .opt-row .mark{
+    flex:0 0 auto; display:flex; align-items:center; gap:6px; font-size:12px;
+    color:#ffd8a2;
+  }
+  .opt-row .letter-tag{
+    width:30px; height:30px; flex:0 0 auto; border-radius:8px;
+    background: linear-gradient(180deg, #FFD24A, #F5A623); color:#3a1d00;
+    display:grid; place-items:center; font-weight:800;
+  }
+  .qlist{display:flex; flex-direction:column; gap:10px; max-height:520px; overflow:auto; padding-right:4px}
+  .qitem{
+    background: rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.08);
+    border-radius:14px; padding:14px;
+  }
+  .qitem .qhead{display:flex; justify-content:space-between; gap:10px; align-items:flex-start}
+  .qitem .qt{font-weight:600; font-size:14px}
+  .qitem .small{font-size:12px; color:#cfbcf2; margin-top:4px}
+  .qitem .row{display:flex; gap:8px; margin-top:10px}
+  .badge{
+    display:inline-flex; padding:3px 8px; border-radius:999px; font-size:11px;
+    background: rgba(255,210,74,.15); color:#FFE7A1; border:1px solid rgba(255,210,74,.3);
+    font-weight:700; letter-spacing:.5px;
+  }
+  .hidden{display:none !important}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background: rgba(20,10,40,.95); border:1px solid rgba(255,255,255,.1);
+    padding:12px 18px; border-radius:999px; font-size:13px;
+    box-shadow: var(--shadow); opacity:0; transition:.3s; pointer-events:none;
+    z-index:100;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
+
+  /* Confetti */
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+  .confetti span{
+    position:absolute; top:-10px; width:10px; height:14px;
+    background:#FFD24A; opacity:.9; animation: fall 1.6s linear forwards;
+    border-radius:2px;
+  }
+  @keyframes fall{
+    to{ transform: translateY(110vh) rotate(720deg); opacity:0 }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">$$$</div>
+      <div class="title-wrap">
+        <h1>SHOW DO BRUNÃO</h1>
+        <p>O grande quiz da despedida de solteiro • 10.000 milhas por acerto</p>
+      </div>
+    </div>
+    <div class="nav">
+      <button id="navPlay" class="active">Jogar</button>
+      <button id="navAdmin">Admin</button>
+    </div>
+  </div>
+
+  <!-- PLAY VIEW -->
+  <section id="playView" class="card">
+    <div class="hud">
+      <div class="pill">
+        <span>Pergunta</span>
+        <strong id="qProgress" style="color:#FFD24A">0/0</strong>
+      </div>
+      <div class="miles" title="Milhas acumuladas">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M2 12l7-2 3-7 3 7 7 2-7 2-3 7-3-7-7-2z" fill="#3a1d00"/></svg>
+        <span>Milhas:</span><span class="num" id="milesNum">0</span>
+      </div>
+    </div>
+
+    <div id="gameArea">
+      <!-- filled by JS -->
+    </div>
+  </section>
+
+  <!-- ADMIN VIEW -->
+  <section id="adminView" class="card hidden">
+    <div class="admin-grid">
+      <div>
+        <h2 style="margin:0 0 4px;font-family:'Bebas Neue';letter-spacing:2px;font-size:28px;color:#FFD24A">PAINEL DO APRESENTADOR</h2>
+        <p style="margin:0 0 16px;color:#d6c8f5;font-size:13px">Cadastre as perguntas, alternativas e marque a resposta correta.</p>
+
+        <div id="qForm">
+          <input type="hidden" id="editId" value="">
+          <div class="field">
+            <label for="qInput">Pergunta</label>
+            <textarea id="qInput" placeholder="Ex.: Em que ano o Brunão conheceu a noiva?"></textarea>
+          </div>
+
+          <label>Alternativas (marque a correta)</label>
+          <div id="optsWrap"></div>
+
+          <div class="actions" style="margin-top:18px">
+            <div style="display:flex;gap:8px">
+              <button type="button" class="btn btn-primary" id="saveBtn">Salvar pergunta</button>
+              <button type="button" class="btn btn-ghost" id="cancelEdit">Limpar</button>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="btn btn-ghost" id="exportBtn">Exportar</button>
+              <button type="button" class="btn btn-ghost" id="importBtn">Importar</button>
+              <button type="button" class="btn btn-danger" id="wipeBtn">Apagar tudo</button>
+            </div>
+          </div>
+          <input type="file" id="importFile" accept="application/json" style="display:none">
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+          <h3 style="margin:0;font-family:'Bebas Neue';letter-spacing:2px;font-size:22px;color:#FFD24A">PERGUNTAS</h3>
+          <span class="badge" id="qCount">0</span>
+        </div>
+        <div id="qlist" class="qlist"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="confetti" id="confetti"></div>
+
+<script>
+const STORAGE_KEY = 'showdobrunao.v1';
+const LETTERS = ['A','B','C','D'];
+
+const state = {
+  questions: [], // {id, text, options:[s,s,s,s], correct:0..3}
+  current: 0,
+  miles: 0,
+  answeredThis: false,
+};
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){ state.questions = JSON.parse(raw) || []; }
+  }catch(e){ state.questions = []; }
+  if(state.questions.length === 0){
+    state.questions = seedQuestions();
+    save();
+  }
+}
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.questions)); }
+function seedQuestions(){
+  return [
+    { id: uid(), text: "Quem é mais frequentemente responsável pelos atrasos do casal?", options:["Raissa","Bruno","Empate técnico","Quem marcou o compromisso cedo demais"], correct:1 },
+    { id: uid(), text: "Quem passa mais tempo escolhendo filme?", options:["Raissa","Bruno","Ambos","O filme nunca é escolhido"], correct:0 },
+    { id: uid(), text: "Quando a noiva percebeu que estava ficando sério?", options:["Quando foi apresentada pra família do noivo","Quando ele disse “eu te amo”","Quando planejaram a primeira viagem juntos","Quando viu que estava contabilizada no planejamento financeiro de 2047"], correct:3 },
+    { id: uid(), text: "O que tem mais chance de fazer o noivo chorar?", options:["Ver a noiva entrando no altar","O orçamento final do casamento","O ar-condicionado parar de funcionar","A Raissa dizer “precisamos conversar sobre um detalhe”"], correct:2 },
+    { id: uid(), text: "Qual seria o maior trauma do noivo atualmente?", options:["Perder a carteira","Perder o passaporte","Perder o horário do voo","Ser permanentemente proibido de andar sem camisa"], correct:3 },
+  ];
+}
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+/* ---------- NAV ---------- */
+const navPlay = document.getElementById('navPlay');
+const navAdmin = document.getElementById('navAdmin');
+const playView = document.getElementById('playView');
+const adminView = document.getElementById('adminView');
+
+navPlay.addEventListener('click', ()=>switchView('play'));
+navAdmin.addEventListener('click', ()=>switchView('admin'));
+
+function switchView(v){
+  if(v==='play'){
+    navPlay.classList.add('active'); navAdmin.classList.remove('active');
+    playView.classList.remove('hidden'); adminView.classList.add('hidden');
+    renderGame();
+  } else {
+    navAdmin.classList.add('active'); navPlay.classList.remove('active');
+    adminView.classList.remove('hidden'); playView.classList.add('hidden');
+    renderAdmin();
+  }
+}
+
+/* ---------- GAME ---------- */
+const gameArea = document.getElementById('gameArea');
+const qProgress = document.getElementById('qProgress');
+const milesNum = document.getElementById('milesNum');
+
+function renderGame(){
+  updateHud();
+  if(state.questions.length === 0){
+    gameArea.innerHTML = `
+      <div class="center">
+        <div class="big">SEM PERGUNTAS</div>
+        <p class="sub">Vá em <strong>Admin</strong> e cadastre as perguntas do Brunão.</p>
+        <button class="btn btn-primary" onclick="switchView('admin')">Abrir painel</button>
+      </div>`;
+    return;
+  }
+  if(state.current >= state.questions.length){
+    const total = state.questions.length;
+    const won = state.miles / 10000;
+    gameArea.innerHTML = `
+      <div class="center">
+        <div class="big">VOCÊ FATUROU!</div>
+        <p class="sub">Brunão acertou <strong>${won}</strong> de <strong>${total}</strong> perguntas.</p>
+        <div class="big" style="margin-top:10px">${fmt(state.miles)} MILHAS ✈️</div>
+        <div style="margin-top:16px;display:flex;gap:10px;justify-content:center">
+          <button class="btn btn-primary" id="playAgain">Jogar de novo</button>
+          <button class="btn btn-ghost" onclick="switchView('admin')">Editar perguntas</button>
+        </div>
+      </div>`;
+    document.getElementById('playAgain').onclick = ()=>{
+      state.current=0; state.miles=0; state.answeredThis=false; renderGame();
+    };
+    burstConfetti(120);
+    return;
+  }
+
+  const q = state.questions[state.current];
+  state.answeredThis = false;
+
+  gameArea.innerHTML = `
+    <div class="qbox">
+      <div class="qnum">PERGUNTA ${state.current+1} • VALENDO 10.000 MILHAS</div>
+      <div class="qtext">${escapeHtml(q.text)}</div>
+      <div class="answers" id="answers">
+        ${q.options.map((opt,i)=>`
+          <button class="ans" data-i="${i}">
+            <span class="letter">${LETTERS[i]}</span>
+            ${escapeHtml(opt)}
+          </button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="feedback">Escolha sua resposta, Brunão 👑</div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="skipBtn">Pular</button>
+        <button class="btn btn-primary hidden" id="nextBtn">Próxima ➜</button>
+      </div>
+    </div>
+  `;
+
+  document.querySelectorAll('.ans').forEach(b=>{
+    b.addEventListener('click', ()=>answer(parseInt(b.dataset.i,10)));
+  });
+  document.getElementById('skipBtn').onclick = ()=>{ state.current++; renderGame(); };
+  document.getElementById('nextBtn').onclick = ()=>{ state.current++; renderGame(); };
+}
+
+function answer(i){
+  if(state.answeredThis) return;
+  state.answeredThis = true;
+  const q = state.questions[state.current];
+  const buttons = [...document.querySelectorAll('.ans')];
+  buttons.forEach(b=>b.disabled = true);
+  const fb = document.getElementById('feedback');
+
+  if(i === q.correct){
+    buttons[i].classList.add('correct');
+    state.miles += 10000;
+    fb.textContent = `🎉 RESPOSTA CERTA! +10.000 milhas para o Brunão!`;
+    fb.classList.remove('no'); fb.classList.add('ok');
+    animateMiles();
+    burstConfetti(60);
+  } else {
+    buttons[i].classList.add('wrong');
+    buttons[q.correct].classList.add('correct');
+    fb.textContent = `❌ Errou! A resposta correta era ${LETTERS[q.correct]}: ${q.options[q.correct]}`;
+    fb.classList.remove('ok'); fb.classList.add('no');
+  }
+  document.getElementById('nextBtn').classList.remove('hidden');
+  document.getElementById('skipBtn').classList.add('hidden');
+  updateHud();
+}
+
+function updateHud(){
+  qProgress.textContent = `${Math.min(state.current+1, state.questions.length)}/${state.questions.length}`;
+  milesNum.textContent = fmt(state.miles);
+}
+function animateMiles(){
+  milesNum.animate(
+    [{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],
+    {duration:500, easing:'ease-out'}
+  );
+}
+function fmt(n){ return n.toLocaleString('pt-BR'); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- CONFETTI ---------- */
+const confettiBox = document.getElementById('confetti');
+function burstConfetti(n=60){
+  const colors = ['#FFD24A','#F5A623','#ffffff','#a259ff','#2ecc71'];
+  for(let i=0;i<n;i++){
+    const s = document.createElement('span');
+    s.style.left = Math.random()*100+'%';
+    s.style.background = colors[Math.floor(Math.random()*colors.length)];
+    s.style.animationDelay = (Math.random()*.4)+'s';
+    s.style.animationDuration = (1.2 + Math.random()*1.4)+'s';
+    s.style.transform = `rotate(${Math.random()*360}deg)`;
+    confettiBox.appendChild(s);
+    setTimeout(()=>s.remove(), 2800);
+  }
+}
+
+/* ---------- ADMIN ---------- */
+const qForm = document.getElementById('qForm');
+const qInput = document.getElementById('qInput');
+const optsWrap = document.getElementById('optsWrap');
+const editId = document.getElementById('editId');
+const qlist = document.getElementById('qlist');
+const qCount = document.getElementById('qCount');
+const cancelEdit = document.getElementById('cancelEdit');
+const wipeBtn = document.getElementById('wipeBtn');
+const exportBtn = document.getElementById('exportBtn');
+const importBtn = document.getElementById('importBtn');
+const importFile = document.getElementById('importFile');
+
+function buildOptInputs(values=['','','',''], correct=0){
+  optsWrap.innerHTML = values.map((v,i)=>`
+    <div class="opt-row">
+      <span class="letter-tag">${LETTERS[i]}</span>
+      <input type="text" data-opt="${i}" value="${escapeHtml(v)}" placeholder="Alternativa ${LETTERS[i]}">
+      <label class="mark"><input type="radio" name="correct" value="${i}" ${i===correct?'checked':''}> Correta</label>
+    </div>
+  `).join('');
+}
+
+function renderAdmin(){
+  qCount.textContent = state.questions.length + (state.questions.length===1?' pergunta':' perguntas');
+  qlist.innerHTML = state.questions.map((q, idx)=>`
+    <div class="qitem">
+      <div class="qhead">
+        <div>
+          <div class="qt">${idx+1}. ${escapeHtml(q.text)}</div>
+          <div class="small">Resposta: <strong style="color:#FFD24A">${LETTERS[q.correct]}</strong> — ${escapeHtml(q.options[q.correct])}</div>
+        </div>
+        <span class="badge">${LETTERS[q.correct]}</span>
+      </div>
+      <div class="row">
+        <button class="btn btn-ghost" data-edit="${q.id}">Editar</button>
+        <button class="btn btn-ghost" data-up="${q.id}">↑</button>
+        <button class="btn btn-ghost" data-down="${q.id}">↓</button>
+        <button class="btn btn-danger" data-del="${q.id}">Excluir</button>
+      </div>
+    </div>
+  `).join('') || `<div style="color:#cfbcf2;font-size:13px">Nenhuma pergunta cadastrada ainda.</div>`;
+
+  qlist.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>startEdit(b.dataset.edit));
+  qlist.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteQ(b.dataset.del));
+  qlist.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>move(b.dataset.up,-1));
+  qlist.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>move(b.dataset.down,+1));
+
+  if(!editId.value){
+    buildOptInputs();
+  }
+}
+
+function startEdit(id){
+  const q = state.questions.find(x=>x.id===id);
+  if(!q) return;
+  editId.value = id;
+  qInput.value = q.text;
+  buildOptInputs(q.options, q.correct);
+  qInput.focus();
+  toast('Editando pergunta');
+}
+
+function resetForm(){
+  editId.value = '';
+  qInput.value = '';
+  buildOptInputs();
+}
+
+cancelEdit.onclick = ()=>{ resetForm(); toast('Formulário limpo'); };
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  const text = qInput.value.trim();
+  const options = [...optsWrap.querySelectorAll('input[type=text]')].map(i=>i.value.trim());
+  const correctEl = optsWrap.querySelector('input[name=correct]:checked');
+  if(!text){ return toast('Escreva a pergunta'); }
+  if(options.some(o=>!o)){ return toast('Preencha as 4 alternativas'); }
+  if(!correctEl){ return toast('Marque a alternativa correta'); }
+  const correct = parseInt(correctEl.value,10);
+
+  if(editId.value){
+    const q = state.questions.find(x=>x.id===editId.value);
+    if(q){ q.text=text; q.options=options; q.correct=correct; toast('Pergunta atualizada'); }
+  } else {
+    state.questions.push({id:uid(), text, options, correct});
+    toast('Pergunta adicionada');
+  }
+  save();
+  resetForm();
+  renderAdmin();
+});
+
+function deleteQ(id){
+  if(!confirm('Excluir esta pergunta?')) return;
+  state.questions = state.questions.filter(x=>x.id!==id);
+  save(); renderAdmin();
+}
+function move(id, dir){
+  const i = state.questions.findIndex(x=>x.id===id);
+  const j = i + dir;
+  if(i<0 || j<0 || j>=state.questions.length) return;
+  [state.questions[i], state.questions[j]] = [state.questions[j], state.questions[i]];
+  save(); renderAdmin();
+}
+
+wipeBtn.onclick = ()=>{
+  if(!confirm('Apagar TODAS as perguntas?')) return;
+  state.questions = []; save(); renderAdmin();
+  toast('Tudo apagado');
+};
+
+exportBtn.onclick = ()=>{
+  const blob = new Blob([JSON.stringify(state.questions, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'show-do-brunao-perguntas.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+importBtn.onclick = ()=>importFile.click();
+importFile.onchange = (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      if(!Array.isArray(data)) throw new Error('Formato inválido');
+      data.forEach(q=>{
+        if(typeof q.text==='string' && Array.isArray(q.options) && q.options.length===4 && Number.isInteger(q.correct)){
+          state.questions.push({id:uid(), text:q.text, options:q.options.map(String), correct:q.correct});
+        }
+      });
+      save(); renderAdmin();
+      toast('Importação concluída');
+    }catch(err){ toast('Arquivo inválido'); }
+  };
+  r.readAsText(f);
+  importFile.value = '';
+};
+
+/* ---------- TOAST ---------- */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ---------- INIT ---------- */
+load();
+buildOptInputs();
+renderGame();
+</script>
+</body>
+</html>
