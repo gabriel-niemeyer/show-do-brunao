@@ -569,7 +569,7 @@ function renderGame(){
     gameArea.innerHTML = `
       <div class="center" id="scoreCard">
         <div class="big">VOCÊ FATUROU!</div>
-        <p class="sub">Brunão acertou <strong>${won}</strong> de <strong>${total}</strong> perguntas.</p>
+        <p class="sub">Você acertou <strong>${won}</strong> de <strong>${total}</strong> perguntas.</p>
         <div class="big" style="margin-top:10px">${fmt(state.miles)} MILHAS ✈️</div>
         <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap" data-no-capture>
           <button class="btn btn-primary" id="shareScoreBtn">📲 Enviar pontuação</button>
@@ -688,7 +688,24 @@ async function shareScore(won, total){
     // hide buttons in the screenshot
     const noCap = card.querySelectorAll('[data-no-capture]');
     noCap.forEach(el=>el.style.visibility='hidden');
+    // html2canvas doesn't render background-clip:text — force solid gold on .big
+    const bigs = card.querySelectorAll('.big');
+    const prevStyles = [...bigs].map(el=>({bg:el.style.background, c:el.style.color, wbc:el.style.webkitBackgroundClip, bc:el.style.backgroundClip, ts:el.style.textShadow}));
+    bigs.forEach(el=>{
+      el.style.background = 'none';
+      el.style.webkitBackgroundClip = 'border-box';
+      el.style.backgroundClip = 'border-box';
+      el.style.color = '#FFD24A';
+      el.style.textShadow = '0 2px 0 rgba(0,0,0,.2)';
+    });
     const canvas = await html2canvas(card, {backgroundColor:'#1a0f3d', scale:2, useCORS:true});
+    bigs.forEach((el,i)=>{
+      el.style.background = prevStyles[i].bg;
+      el.style.webkitBackgroundClip = prevStyles[i].wbc;
+      el.style.backgroundClip = prevStyles[i].bc;
+      el.style.color = prevStyles[i].c;
+      el.style.textShadow = prevStyles[i].ts;
+    });
     noCap.forEach(el=>el.style.visibility='');
     const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
     const file = new File([blob], 'show-do-brunao.png', {type:'image/png'});
