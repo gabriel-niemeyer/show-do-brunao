@@ -337,6 +337,7 @@
     to{ transform: translateY(110vh) rotate(720deg); opacity:0 }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -566,18 +567,20 @@ function renderGame(){
     const total = state.questions.length;
     const won = state.miles / 10000;
     gameArea.innerHTML = `
-      <div class="center">
+      <div class="center" id="scoreCard">
         <div class="big">VOCÊ FATUROU!</div>
         <p class="sub">Brunão acertou <strong>${won}</strong> de <strong>${total}</strong> perguntas.</p>
         <div class="big" style="margin-top:10px">${fmt(state.miles)} MILHAS ✈️</div>
-        <div style="margin-top:16px;display:flex;gap:10px;justify-content:center">
-          <button class="btn btn-primary" id="playAgain">Jogar de novo</button>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap" data-no-capture>
+          <button class="btn btn-primary" id="shareScoreBtn">📲 Enviar pontuação</button>
+          <button class="btn btn-ghost" id="playAgain">Jogar de novo</button>
           <button class="btn btn-ghost" onclick="switchView('admin')">Editar perguntas</button>
         </div>
       </div>`;
     document.getElementById('playAgain').onclick = ()=>{
       state.current=0; state.miles=0; state.answeredThis=false; renderGame();
     };
+    document.getElementById('shareScoreBtn').onclick = ()=>shareScore(won, total);
     burstConfetti(120);
     return;
   }
@@ -672,6 +675,51 @@ function animateMiles(){
   );
 }
 function fmt(n){ return n.toLocaleString('pt-BR'); }
+
+const SHARE_PHONE = '5521998122977';
+async function shareScore(won, total){
+  const btn = document.getElementById('shareScoreBtn');
+  const original = btn.textContent;
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+  const msg = `🎉 SHOW DO BRUNÃO! Acertei ${won} de ${total} perguntas e faturei ${fmt(state.miles)} milhas ✈️`;
+  try{
+    const card = document.getElementById('scoreCard');
+    // hide buttons in the screenshot
+    const noCap = card.querySelectorAll('[data-no-capture]');
+    noCap.forEach(el=>el.style.visibility='hidden');
+    const canvas = await html2canvas(card, {backgroundColor:'#1a0f3d', scale:2, useCORS:true});
+    noCap.forEach(el=>el.style.visibility='');
+    const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+    const file = new File([blob], 'show-do-brunao.png', {type:'image/png'});
+
+    // Try Web Share API with file (mobile)
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file], text:msg, title:'Show do Brunão'});
+        toast('Compartilhado!');
+        return;
+      }catch(e){
+        if(e.name === 'AbortError'){ return; }
+      }
+    }
+    // Fallback: download PNG + open WhatsApp chat with text
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'show-do-brunao.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    const waUrl = `https://wa.me/${SHARE_PHONE}?text=${encodeURIComponent(msg + '\n(anexe o print baixado 👆)')}`;
+    window.open(waUrl, '_blank');
+    toast('Print baixado — anexe no WhatsApp');
+  }catch(e){
+    console.error(e);
+    toast('Erro ao gerar print');
+  }finally{
+    btn.textContent = original;
+    btn.disabled = false;
+  }
+}
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* ---------- CONFETTI ---------- */
