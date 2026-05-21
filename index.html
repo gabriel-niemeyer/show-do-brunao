@@ -248,6 +248,60 @@
     display:grid; place-items:center; font-weight:800;
   }
   .qlist{display:flex; flex-direction:column; gap:10px; max-height:520px; overflow:auto; padding-right:4px}
+  .theme-sep{
+    display:flex; align-items:center; gap:12px; margin:14px 0 4px;
+    font-family:'Bebas Neue', sans-serif; letter-spacing:3px;
+    color:#FFD24A; font-size:18px;
+  }
+  .theme-sep::before, .theme-sep::after{
+    content:""; flex:1; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,210,74,.5), transparent);
+  }
+  .theme-sep span{padding:4px 10px; border:1px solid rgba(255,210,74,.4); border-radius:999px; background:rgba(255,210,74,.06)}
+  .theme-sep:first-child{margin-top:0}
+
+  .theme-banner{
+    display:inline-block; margin:0 auto 14px; padding:6px 16px;
+    font-family:'Bebas Neue', sans-serif; letter-spacing:4px; font-size:18px;
+    color:#1a0f3d; background:linear-gradient(180deg,#FFE07A,#F2B23A);
+    border-radius:999px; box-shadow:0 6px 20px rgba(255,210,74,.25);
+    text-align:center;
+  }
+  .theme-banner.is-new{animation:popIn .5s ease}
+  @keyframes popIn{
+    0%{transform:scale(.6);opacity:0}
+    60%{transform:scale(1.08);opacity:1}
+    100%{transform:scale(1);opacity:1}
+  }
+  #gameArea{display:flex;flex-direction:column;align-items:center}
+  #gameArea > .qbox{width:100%}
+
+  .cover{
+    width:100%; text-align:center; padding:48px 24px;
+    background:radial-gradient(ellipse at top, rgba(255,210,74,.12), transparent 70%),
+               linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.2));
+    border:1px solid rgba(255,210,74,.25); border-radius:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+    animation:coverIn .55s ease;
+  }
+  .cover-eyebrow{
+    font-family:'Bebas Neue', sans-serif; letter-spacing:6px;
+    color:#FFD24A; font-size:14px; opacity:.85; margin-bottom:14px;
+  }
+  .cover-title{
+    font-family:'Bebas Neue', sans-serif; letter-spacing:3px;
+    font-size:clamp(48px, 9vw, 96px); line-height:1;
+    background:linear-gradient(180deg,#FFE07A 0%,#F2B23A 60%,#C98A1F 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 60px rgba(255,210,74,.25);
+    margin:0 0 14px;
+  }
+  .cover-sub{color:#d6c8f5; font-size:16px; margin-bottom:28px}
+  .cover-cta{font-size:16px; padding:14px 28px}
+  @keyframes coverIn{
+    0%{transform:scale(.92);opacity:0; filter:blur(8px)}
+    100%{transform:scale(1);opacity:1; filter:blur(0)}
+  }
   .qitem{
     background: rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.08);
     border-radius:14px; padding:14px;
@@ -329,6 +383,10 @@
         <div id="qForm">
           <input type="hidden" id="editId" value="">
           <div class="field">
+            <label for="qGroup">Grupo / Tema</label>
+            <select id="qGroup" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit"></select>
+          </div>
+          <div class="field">
             <label for="qInput">Pergunta</label>
             <textarea id="qInput" placeholder="Ex.: Em que ano o Brunão conheceu a noiva?"></textarea>
           </div>
@@ -353,6 +411,16 @@
 
       <div>
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+          <h3 style="margin:0;font-family:'Bebas Neue';letter-spacing:2px;font-size:22px;color:#FFD24A">GRUPOS</h3>
+          <span class="badge" id="gCount">0</span>
+        </div>
+        <div id="glist" class="qlist" style="max-height:none;margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px;margin-bottom:24px">
+          <input id="newGroupName" type="text" placeholder="Novo grupo (ex.: Música)" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit">
+          <button type="button" class="btn btn-primary" id="addGroupBtn">+ Grupo</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
           <h3 style="margin:0;font-family:'Bebas Neue';letter-spacing:2px;font-size:22px;color:#FFD24A">PERGUNTAS</h3>
           <span class="badge" id="qCount">0</span>
         </div>
@@ -366,12 +434,13 @@
 <div class="confetti" id="confetti"></div>
 
 <script>
-const STORAGE_KEY = 'showdobrunao.v1';
+const STORAGE_KEY = 'showdobrunao.v2';
 const LETTERS = ['A','B','C','D'];
 
 const state = {
-  questions: [], // {id, text, options:[s,s,s,s], correct:0..3}
-  current: 0,
+  groups: [],    // {id, name}
+  questions: [], // {id, groupId, text, options:[s,s,s,s], correct:0..3}
+  current: 0,    // index in sequence (covers + questions)
   miles: 0,
   answeredThis: false,
 };
@@ -379,22 +448,73 @@ const state = {
 function load(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){ state.questions = JSON.parse(raw) || []; }
-  }catch(e){ state.questions = []; }
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)){
+        // legacy: array of questions, possibly with q.theme
+        const themes = [...new Set(parsed.map(q=>(q.theme||'').trim()).filter(Boolean))];
+        state.groups = themes.map(n=>({id:uid(), name:n}));
+        const map = new Map(state.groups.map(g=>[g.name, g.id]));
+        state.questions = parsed.map(q=>({
+          id:q.id||uid(),
+          groupId: q.theme ? map.get(q.theme.trim()) : null,
+          text:q.text, options:q.options, correct:q.correct
+        }));
+      } else if(parsed && parsed.questions){
+        state.groups = parsed.groups || [];
+        state.questions = parsed.questions || [];
+      }
+    }
+  }catch(e){ state.groups=[]; state.questions=[]; }
   if(state.questions.length === 0){
-    state.questions = seedQuestions();
+    const seed = seedData();
+    state.groups = seed.groups;
+    state.questions = seed.questions;
     save();
   }
 }
-function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.questions)); }
-function seedQuestions(){
-  return [
-    { id: uid(), text: "Quem é mais frequentemente responsável pelos atrasos do casal?", options:["Raissa","Bruno","Empate técnico","Quem marcou o compromisso cedo demais"], correct:1 },
-    { id: uid(), text: "Quem passa mais tempo escolhendo filme?", options:["Raissa","Bruno","Ambos","O filme nunca é escolhido"], correct:0 },
-    { id: uid(), text: "Quando a noiva percebeu que estava ficando sério?", options:["Quando foi apresentada pra família do noivo","Quando ele disse “eu te amo”","Quando planejaram a primeira viagem juntos","Quando viu que estava contabilizada no planejamento financeiro de 2047"], correct:3 },
-    { id: uid(), text: "O que tem mais chance de fazer o noivo chorar?", options:["Ver a noiva entrando no altar","O orçamento final do casamento","O ar-condicionado parar de funcionar","A Raissa dizer “precisamos conversar sobre um detalhe”"], correct:2 },
-    { id: uid(), text: "Qual seria o maior trauma do noivo atualmente?", options:["Perder a carteira","Perder o passaporte","Perder o horário do voo","Ser permanentemente proibido de andar sem camisa"], correct:3 },
-  ];
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({groups:state.groups, questions:state.questions})); }
+function seedData(){
+  const g1={id:uid(),name:"O Casal"};
+  const g2={id:uid(),name:"Vasco da Gama"};
+  const g3={id:uid(),name:"Economia"};
+  const g4={id:uid(),name:"Trabalho"};
+  return {
+    groups:[g1,g2,g3,g4],
+    questions:[
+      { id: uid(), groupId:g1.id, text: "Quem é mais frequentemente responsável pelos atrasos do casal?", options:["Raissa","Bruno","Empate técnico","Quem marcou o compromisso cedo demais"], correct:1 },
+      { id: uid(), groupId:g1.id, text: "Quem passa mais tempo escolhendo filme?", options:["Raissa","Bruno","Ambos","O filme nunca é escolhido"], correct:0 },
+      { id: uid(), groupId:g1.id, text: "Quando a noiva percebeu que estava ficando sério?", options:["Quando foi apresentada pra família do noivo","Quando ele disse “eu te amo”","Quando planejaram a primeira viagem juntos","Quando viu que estava contabilizada no planejamento financeiro de 2047"], correct:3 },
+      { id: uid(), groupId:g1.id, text: "O que tem mais chance de fazer o noivo chorar?", options:["Ver a noiva entrando no altar","O orçamento final do casamento","O ar-condicionado parar de funcionar","A Raissa dizer “precisamos conversar sobre um detalhe”"], correct:2 },
+      { id: uid(), groupId:g1.id, text: "Qual seria o maior trauma do noivo atualmente?", options:["Perder a carteira","Perder o passaporte","Perder o horário do voo","Ser permanentemente proibido de andar sem camisa"], correct:3 },
+      { id: uid(), groupId:g2.id, text: "Em que ano o Vasco da Gama conquistou seu primeiro título do Campeonato Brasileiro?", options:["1970","1974","1978","1982"], correct:1 },
+      { id: uid(), groupId:g2.id, text: "O Estádio de São Januário, casa do Vasco, foi inaugurado em 1927. Na época, ele tinha um título de destaque. Qual?", options:["Era o estádio mais antigo do Brasil","Era o maior estádio da América Latina","Foi o primeiro estádio com iluminação noturna do mundo","Era o único estádio à beira-mar do Rio de Janeiro"], correct:1 },
+      { id: uid(), groupId:g3.id, text: "Quem é considerado o “pai da economia moderna” e cunhou o famoso conceito da “mão invisível” do mercado em 1776?", options:["John Maynard Keynes","Karl Marx","Adam Smith","David Ricardo"], correct:2 },
+      { id: uid(), groupId:g3.id, text: "A Curva de Phillips, clássica da macroeconomia, descreve a relação entre quais duas variáveis?", options:["Juros e câmbio","Inflação e desemprego","PIB e consumo das famílias","Oferta e demanda de moeda"], correct:1 },
+      { id: uid(), groupId:g4.id, text: "Qual destes impostos NÃO é de competência estadual (ou seja, não é arrecadado por ele)?", options:["ICMS (Imposto sobre Circulação de Mercadorias e Serviços)","IPVA (Imposto sobre Propriedade de Veículos Automotores)","ITCD (Imposto sobre Transmissão Causa Mortis e Doação)","IPTU (Imposto Predial e Territorial Urbano)"], correct:3 },
+    ]
+  };
+}
+
+// build flat play sequence: cover items + question items, ordered by group
+function buildSequence(){
+  const seq = [];
+  const byGroup = new Map();
+  state.questions.forEach(q=>{
+    const gid = q.groupId || '_none';
+    if(!byGroup.has(gid)) byGroup.set(gid, []);
+    byGroup.get(gid).push(q);
+  });
+  state.groups.forEach(g=>{
+    const qs = byGroup.get(g.id) || [];
+    if(qs.length){
+      seq.push({type:'cover', group:g, count:qs.length});
+      qs.forEach(q=> seq.push({type:'question', q, group:g}));
+    }
+  });
+  const unassigned = byGroup.get('_none') || [];
+  unassigned.forEach(q=> seq.push({type:'question', q, group:null}));
+  return seq;
 }
 function uid(){ return Math.random().toString(36).slice(2,10); }
 
@@ -407,12 +527,18 @@ const adminView = document.getElementById('adminView');
 navPlay.addEventListener('click', ()=>switchView('play'));
 navAdmin.addEventListener('click', ()=>switchView('admin'));
 
+const ADMIN_PASS = 'gabiru';
 function switchView(v){
   if(v==='play'){
     navPlay.classList.add('active'); navAdmin.classList.remove('active');
     playView.classList.remove('hidden'); adminView.classList.add('hidden');
     renderGame();
   } else {
+    if(sessionStorage.getItem('showdobrunao.admin') !== '1'){
+      const pass = prompt('Senha do admin:');
+      if(pass !== ADMIN_PASS){ if(pass!==null) toast('Senha incorreta'); return; }
+      sessionStorage.setItem('showdobrunao.admin','1');
+    }
     navAdmin.classList.add('active'); navPlay.classList.remove('active');
     adminView.classList.remove('hidden'); playView.classList.add('hidden');
     renderAdmin();
@@ -425,7 +551,8 @@ const qProgress = document.getElementById('qProgress');
 const milesNum = document.getElementById('milesNum');
 
 function renderGame(){
-  updateHud();
+  const seq = buildSequence();
+  updateHud(seq);
   if(state.questions.length === 0){
     gameArea.innerHTML = `
       <div class="center">
@@ -435,7 +562,7 @@ function renderGame(){
       </div>`;
     return;
   }
-  if(state.current >= state.questions.length){
+  if(state.current >= seq.length){
     const total = state.questions.length;
     const won = state.miles / 10000;
     gameArea.innerHTML = `
@@ -455,12 +582,31 @@ function renderGame(){
     return;
   }
 
-  const q = state.questions[state.current];
+  const item = seq[state.current];
+
+  if(item.type === 'cover'){
+    const total = item.count;
+    gameArea.innerHTML = `
+      <div class="cover">
+        <div class="cover-eyebrow">PRÓXIMO BLOCO</div>
+        <div class="cover-title">${escapeHtml(item.group.name)}</div>
+        <div class="cover-sub">${total} pergunta${total>1?'s':''} • valendo ${fmt(total*10000)} milhas</div>
+        <button class="btn btn-primary cover-cta" id="coverStart">Começar bloco ➜</button>
+      </div>`;
+    document.getElementById('coverStart').onclick = ()=>{ state.current++; renderGame(); };
+    burstConfetti(40);
+    return;
+  }
+
+  const q = item.q;
   state.answeredThis = false;
+  const qPos = seq.slice(0, state.current+1).filter(s=>s.type==='question').length;
+  const qTotal = state.questions.length;
 
   gameArea.innerHTML = `
+    ${item.group ? `<div class="theme-banner">${escapeHtml(item.group.name)}</div>` : ''}
     <div class="qbox">
-      <div class="qnum">PERGUNTA ${state.current+1} • VALENDO 10.000 MILHAS</div>
+      <div class="qnum">PERGUNTA ${qPos}/${qTotal} • VALENDO 10.000 MILHAS</div>
       <div class="qtext">${escapeHtml(q.text)}</div>
       <div class="answers" id="answers">
         ${q.options.map((opt,i)=>`
@@ -488,7 +634,8 @@ function renderGame(){
 function answer(i){
   if(state.answeredThis) return;
   state.answeredThis = true;
-  const q = state.questions[state.current];
+  const seq = buildSequence();
+  const q = seq[state.current].q;
   const buttons = [...document.querySelectorAll('.ans')];
   buttons.forEach(b=>b.disabled = true);
   const fb = document.getElementById('feedback');
@@ -511,8 +658,11 @@ function answer(i){
   updateHud();
 }
 
-function updateHud(){
-  qProgress.textContent = `${Math.min(state.current+1, state.questions.length)}/${state.questions.length}`;
+function updateHud(seq){
+  const s = seq || buildSequence();
+  const upTo = s.slice(0, Math.min(state.current+1, s.length));
+  const qPos = upTo.filter(x=>x.type==='question').length;
+  qProgress.textContent = `${qPos}/${state.questions.length}`;
   milesNum.textContent = fmt(state.miles);
 }
 function animateMiles(){
@@ -564,24 +714,70 @@ function buildOptInputs(values=['','','',''], correct=0){
 }
 
 function renderAdmin(){
-  qCount.textContent = state.questions.length + (state.questions.length===1?' pergunta':' perguntas');
-  qlist.innerHTML = state.questions.map((q, idx)=>`
-    <div class="qitem">
-      <div class="qhead">
-        <div>
-          <div class="qt">${idx+1}. ${escapeHtml(q.text)}</div>
-          <div class="small">Resposta: <strong style="color:#FFD24A">${LETTERS[q.correct]}</strong> — ${escapeHtml(q.options[q.correct])}</div>
+  // groups panel
+  const gCount = document.getElementById('gCount');
+  gCount.textContent = state.groups.length;
+  const glist = document.getElementById('glist');
+  glist.innerHTML = state.groups.map((g, i)=>{
+    const count = state.questions.filter(q=>q.groupId===g.id).length;
+    return `
+      <div class="qitem" style="padding:10px 14px">
+        <div class="qhead">
+          <div style="flex:1">
+            <input data-gname="${g.id}" value="${escapeHtml(g.name)}" style="width:100%;background:transparent;border:none;color:#fff;font-weight:700;font-size:15px;font-family:inherit;outline:none">
+            <div class="small">${count} pergunta${count!==1?'s':''}</div>
+          </div>
+          <div class="row" style="margin:0">
+            <button class="btn btn-ghost" data-gup="${g.id}">↑</button>
+            <button class="btn btn-ghost" data-gdown="${g.id}">↓</button>
+            <button class="btn btn-danger" data-gdel="${g.id}">Excluir</button>
+          </div>
         </div>
-        <span class="badge">${LETTERS[q.correct]}</span>
-      </div>
-      <div class="row">
-        <button class="btn btn-ghost" data-edit="${q.id}">Editar</button>
-        <button class="btn btn-ghost" data-up="${q.id}">↑</button>
-        <button class="btn btn-ghost" data-down="${q.id}">↓</button>
-        <button class="btn btn-danger" data-del="${q.id}">Excluir</button>
-      </div>
-    </div>
-  `).join('') || `<div style="color:#cfbcf2;font-size:13px">Nenhuma pergunta cadastrada ainda.</div>`;
+      </div>`;
+  }).join('') || `<div style="color:#cfbcf2;font-size:13px">Nenhum grupo. Crie um abaixo.</div>`;
+
+  glist.querySelectorAll('[data-gname]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const g = state.groups.find(x=>x.id===inp.dataset.gname);
+      if(g){ g.name = inp.value.trim() || g.name; save(); renderAdmin(); }
+    });
+  });
+  glist.querySelectorAll('[data-gup]').forEach(b=>b.onclick=()=>moveGroup(b.dataset.gup,-1));
+  glist.querySelectorAll('[data-gdown]').forEach(b=>b.onclick=()=>moveGroup(b.dataset.gdown,+1));
+  glist.querySelectorAll('[data-gdel]').forEach(b=>b.onclick=()=>deleteGroup(b.dataset.gdel));
+
+  // populate group select in form
+  const qGroup = document.getElementById('qGroup');
+  const currentVal = qGroup.value;
+  qGroup.innerHTML = `<option value="">— sem grupo —</option>` +
+    state.groups.map(g=>`<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+  qGroup.value = currentVal;
+
+  // questions list, grouped
+  qCount.textContent = state.questions.length + (state.questions.length===1?' pergunta':' perguntas');
+  const byGroup = new Map();
+  state.questions.forEach(q=>{
+    const gid = q.groupId || '_none';
+    if(!byGroup.has(gid)) byGroup.set(gid, []);
+    byGroup.get(gid).push(q);
+  });
+  const blocks = [];
+  let idx = 0;
+  state.groups.forEach(g=>{
+    const qs = byGroup.get(g.id) || [];
+    if(!qs.length) return;
+    blocks.push(`<div class="theme-sep"><span>${escapeHtml(g.name)}</span></div>`);
+    qs.forEach(q=>{
+      idx++;
+      blocks.push(qItemHTML(q, idx));
+    });
+  });
+  const orphans = byGroup.get('_none') || [];
+  if(orphans.length){
+    blocks.push(`<div class="theme-sep"><span>Sem grupo</span></div>`);
+    orphans.forEach(q=>{ idx++; blocks.push(qItemHTML(q, idx)); });
+  }
+  qlist.innerHTML = blocks.join('') || `<div style="color:#cfbcf2;font-size:13px">Nenhuma pergunta cadastrada ainda.</div>`;
 
   qlist.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>startEdit(b.dataset.edit));
   qlist.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteQ(b.dataset.del));
@@ -593,11 +789,58 @@ function renderAdmin(){
   }
 }
 
+function qItemHTML(q, idx){
+  return `
+    <div class="qitem">
+      <div class="qhead">
+        <div>
+          <div class="qt">${idx}. ${escapeHtml(q.text)}</div>
+          <div class="small">Resposta: <strong style="color:#FFD24A">${LETTERS[q.correct]}</strong> — ${escapeHtml(q.options[q.correct])}</div>
+        </div>
+        <span class="badge">${LETTERS[q.correct]}</span>
+      </div>
+      <div class="row">
+        <button class="btn btn-ghost" data-edit="${q.id}">Editar</button>
+        <button class="btn btn-ghost" data-up="${q.id}">↑</button>
+        <button class="btn btn-ghost" data-down="${q.id}">↓</button>
+        <button class="btn btn-danger" data-del="${q.id}">Excluir</button>
+      </div>
+    </div>`;
+}
+
+function moveGroup(id, dir){
+  const i = state.groups.findIndex(g=>g.id===id);
+  const j = i+dir;
+  if(i<0 || j<0 || j>=state.groups.length) return;
+  [state.groups[i], state.groups[j]] = [state.groups[j], state.groups[i]];
+  save(); renderAdmin();
+}
+function deleteGroup(id){
+  const count = state.questions.filter(q=>q.groupId===id).length;
+  const msg = count>0
+    ? `Excluir grupo? As ${count} pergunta(s) vão ficar sem grupo.`
+    : 'Excluir grupo?';
+  if(!confirm(msg)) return;
+  state.groups = state.groups.filter(g=>g.id!==id);
+  state.questions.forEach(q=>{ if(q.groupId===id) q.groupId = null; });
+  save(); renderAdmin();
+}
+document.getElementById('addGroupBtn').addEventListener('click', ()=>{
+  const inp = document.getElementById('newGroupName');
+  const name = inp.value.trim();
+  if(!name){ return toast('Dê um nome ao grupo'); }
+  state.groups.push({id:uid(), name});
+  inp.value = '';
+  save(); renderAdmin();
+  toast('Grupo criado');
+});
+
 function startEdit(id){
   const q = state.questions.find(x=>x.id===id);
   if(!q) return;
   editId.value = id;
   qInput.value = q.text;
+  document.getElementById('qGroup').value = q.groupId || '';
   buildOptInputs(q.options, q.correct);
   qInput.focus();
   toast('Editando pergunta');
@@ -606,6 +849,7 @@ function startEdit(id){
 function resetForm(){
   editId.value = '';
   qInput.value = '';
+  document.getElementById('qGroup').value = '';
   buildOptInputs();
 }
 
@@ -619,12 +863,13 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
   if(options.some(o=>!o)){ return toast('Preencha as 4 alternativas'); }
   if(!correctEl){ return toast('Marque a alternativa correta'); }
   const correct = parseInt(correctEl.value,10);
+  const groupId = document.getElementById('qGroup').value || null;
 
   if(editId.value){
     const q = state.questions.find(x=>x.id===editId.value);
-    if(q){ q.text=text; q.options=options; q.correct=correct; toast('Pergunta atualizada'); }
+    if(q){ q.text=text; q.options=options; q.correct=correct; q.groupId=groupId; toast('Pergunta atualizada'); }
   } else {
-    state.questions.push({id:uid(), text, options, correct});
+    state.questions.push({id:uid(), groupId, text, options, correct});
     toast('Pergunta adicionada');
   }
   save();
